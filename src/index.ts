@@ -60,12 +60,12 @@ export interface FileUploadResult {
   getImageUrl: (fileId: string, extension: string, size: number) => string
 }
 
-export const useFileUpload = (config: FileUploadConfig): FileUploadResult => {
-  if (!config.clientId && !process.env.BLUBBER_CLIENT_ID) {
+export const useFileUpload = (config?: FileUploadConfig): FileUploadResult => {
+  if (!config?.clientId && !process.env.BLUBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = (config.clientId || process.env.BLUBBER_CLIENT_ID)!
+  const clientId = (config?.clientId || process.env.BLUBBER_CLIENT_ID)!
 
   const [state, setState] = useState<FileUploadState>({
     file: {
@@ -114,7 +114,7 @@ export const useFileUpload = (config: FileUploadConfig): FileUploadResult => {
 
   const getImageUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
     if (!fileId || fileId === '') {
-      return config.placeholderUrl || ''
+      return config?.placeholderUrl || ''
     }
 
     const root = 'https://d2v15tqee22i7x.cloudfront.net'
@@ -152,12 +152,12 @@ export interface MultipleFileUploadResult {
   getImageUrl: (fileId: string, extension: string, size: number) => string
 }
 
-export const useMultipleFileUpload = (config: MultipleFileUploadConfig): MultipleFileUploadResult => {
-  if (!config.clientId && !process.env.BLUBBER_CLIENT_ID) {
+export const useMultipleFileUpload = (config?: MultipleFileUploadConfig): MultipleFileUploadResult => {
+  if (!config?.clientId && !process.env.BLUBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = (config.clientId || process.env.BLUBBER_CLIENT_ID)!
+  const clientId = (config?.clientId || process.env.BLUBBER_CLIENT_ID)!
 
   const [state, setState] = useState<MultipleFileUploadState>({
     files: [],
@@ -199,7 +199,7 @@ export const useMultipleFileUpload = (config: MultipleFileUploadConfig): Multipl
 
   const getImageUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
     if (!fileId || fileId === '') {
-      return config.placeholderUrl || ''
+      return config?.placeholderUrl || ''
     }
 
     const root = 'https://d2v15tqee22i7x.cloudfront.net'

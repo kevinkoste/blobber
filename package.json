@@ -1,6 +1,6 @@
 {
   "name": "@blobber/react",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "blobber react client sdk",
   "author": "Kevin Koste",
   "license": "MIT",
@@ -35,8 +35,5 @@
     "nodemon": "^2.0.6",
     "prettier": "2.1.2",
     "typescript": "^4.0.2"
-  },
-  "engines": {
-    "node": "14.14.0"
   }
 }

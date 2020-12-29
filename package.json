@@ -1,7 +1,7 @@
 {
-  "name": "blubber",
-  "version": "1.0.0",
-  "description": "blubber client sdk",
+  "name": "@blobber/react",
+  "version": "0.3.0",
+  "description": "blobber react client sdk",
   "author": "Kevin Koste",
   "license": "MIT",
   "keywords": [

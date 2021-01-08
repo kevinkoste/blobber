@@ -15,7 +15,7 @@ const uploadFile = (data: FormData, clientId: string): Promise<FileData[]> => {
     let xhr = new XMLHttpRequest()
 
     xhr.open('POST', 'https://upload.blobber.dev')
-    xhr.setRequestHeader('x-blubber-client-id', clientId)
+    xhr.setRequestHeader('x-blobber-client-id', clientId)
 
     xhr.onload = function () {
       if (this.status >= 200 && this.status < 300) {
@@ -57,15 +57,15 @@ export interface FileUploadResult {
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  getImageUrl: (fileId: string, extension: string, size: number) => string
+  getUrl: (fileId: string, extension: string, size: number) => string
 }
 
-export const useFileUpload = (config?: FileUploadConfig): FileUploadResult => {
-  if (!config?.clientId && !process.env.BLUBBER_CLIENT_ID) {
+export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
+  if (!config?.clientId && !process.env.BLOBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = (config?.clientId || process.env.BLUBBER_CLIENT_ID)!
+  const clientId = (config?.clientId || process.env.BLOBBER_CLIENT_ID)!
 
   const [state, setState] = useState<FileUploadState>({
     file: {
@@ -112,7 +112,7 @@ export const useFileUpload = (config?: FileUploadConfig): FileUploadResult => {
     }
   }
 
-  const getImageUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
+  const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
     if (!fileId || fileId === '') {
       return config?.placeholderUrl || ''
     }
@@ -126,7 +126,7 @@ export const useFileUpload = (config?: FileUploadConfig): FileUploadResult => {
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
-    getImageUrl: getImageUrl,
+    getUrl: getUrl,
   }
 }
 
@@ -149,15 +149,15 @@ export interface MultipleFileUploadResult {
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  getImageUrl: (fileId: string, extension: string, size: number) => string
+  getUrl: (fileId: string, extension: string, size: number) => string
 }
 
-export const useMultipleFileUpload = (config?: MultipleFileUploadConfig): MultipleFileUploadResult => {
-  if (!config?.clientId && !process.env.BLUBBER_CLIENT_ID) {
+export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFileUploadResult => {
+  if (!config?.clientId && !process.env.BLOBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = (config?.clientId || process.env.BLUBBER_CLIENT_ID)!
+  const clientId = (config?.clientId || process.env.BLOBBER_CLIENT_ID)!
 
   const [state, setState] = useState<MultipleFileUploadState>({
     files: [],
@@ -197,7 +197,7 @@ export const useMultipleFileUpload = (config?: MultipleFileUploadConfig): Multip
     }
   }
 
-  const getImageUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
+  const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
     if (!fileId || fileId === '') {
       return config?.placeholderUrl || ''
     }
@@ -211,19 +211,19 @@ export const useMultipleFileUpload = (config?: MultipleFileUploadConfig): Multip
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
-    getImageUrl: getImageUrl,
+    getUrl: getUrl,
   }
 }
 
 // NON HOOKS EXPORTS //
-// These rely on process.env.BLUBBER_CLIENT_ID
+// These rely on process.env.BLOBBER_CLIENT_ID
 
-export const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  if (!process.env.BLUBBER_CLIENT_ID) {
+export const handleUpload = async (event: any) => {
+  if (!process.env.BLOBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = process.env.BLUBBER_CLIENT_ID
+  const clientId = process.env.BLOBBER_CLIENT_ID
 
   const files = event.target.files
   if (!files) {
@@ -247,12 +247,12 @@ export const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) =
   return { error: null, file: res }
 }
 
-export const getImageUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
-  if (!process.env.BLUBBER_CLIENT_ID) {
+export const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
+  if (!process.env.BLOBBER_CLIENT_ID) {
     throw Error('clientId not found: missing environment variable')
   }
 
-  const clientId = process.env.BLUBBER_CLIENT_ID
+  const clientId = process.env.BLOBBER_CLIENT_ID
 
   const root = 'https://d2v15tqee22i7x.cloudfront.net'
   return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`

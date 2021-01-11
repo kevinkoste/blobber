@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface FileData {
   id: string
@@ -43,7 +43,6 @@ const uploadFile = (data: FormData, clientId: string): Promise<FileData[]> => {
 export interface FileUploadConfig {
   clientId?: string
   placeholderUrl?: string
-  onSuccess?: (file: FileData) => void
 }
 
 export interface FileUploadState {
@@ -52,12 +51,15 @@ export interface FileUploadState {
   loading: boolean
 }
 
+export type FileUploadSuccess = (file: FileData | null, error: string | null) => void
+
 export interface FileUploadResult {
   file: FileData | null
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   getUrl: (fileId: string, extension: string, size: number) => string
+  useFile: (onSuccess: FileUploadSuccess) => void
 }
 
 export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
@@ -121,12 +123,25 @@ export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
     return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`
   }
 
+  const useFile = (onSuccess: FileUploadSuccess) => {
+    useEffect(() => {
+      if (!state.loading) {
+        if (state.file && state.file.id !== '') {
+          onSuccess(state.file, null)
+        } else if (state.error) {
+          onSuccess(null, state.error)
+        }
+      }
+    }, [state])
+  }
+
   return {
     file: state.file,
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
     getUrl: getUrl,
+    useFile: useFile,
   }
 }
 
@@ -135,7 +150,6 @@ export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
 export interface MultipleFileUploadConfig {
   clientId?: string
   placeholderUrl?: string
-  onSuccess?: (files: FileData[]) => void
 }
 
 export interface MultipleFileUploadState {
@@ -144,12 +158,15 @@ export interface MultipleFileUploadState {
   loading: boolean
 }
 
+export type MultipleFileUploadSuccess = (files: FileData[] | null, error: string | null) => void
+
 export interface MultipleFileUploadResult {
   files: FileData[]
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   getUrl: (fileId: string, extension: string, size: number) => string
+  useFiles: (onSuccess: MultipleFileUploadSuccess) => void
 }
 
 export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFileUploadResult => {
@@ -206,12 +223,25 @@ export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFi
     return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`
   }
 
+  const useFiles = (onSuccess: MultipleFileUploadSuccess) => {
+    useEffect(() => {
+      if (!state.loading) {
+        if (state.files.length > 0) {
+          onSuccess(state.files, null)
+        } else if (state.error) {
+          onSuccess([], state.error)
+        }
+      }
+    }, [state])
+  }
+
   return {
     files: state.files,
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
     getUrl: getUrl,
+    useFiles: useFiles,
   }
 }
 

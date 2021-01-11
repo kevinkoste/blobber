@@ -1,6 +1,6 @@
 {
   "name": "@blobber/react",
-  "version": "0.6.5",
+  "version": "0.7.3",
   "description": "blobber react client sdk",
   "author": "Kevin Koste",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "file",
     "upload",
     "hook",
-    "node"
+    "handler"
   ],
   "scripts": {
     "build": "tsc"

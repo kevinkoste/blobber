@@ -8,7 +8,7 @@ Visit [blobber.dev][1] for docs & pricing.
 
 ## Install
 
-Add Blobber to your project with `npm` or `yarn`. The package provides a Typescript declaration by default.
+Add Blobber to your project with `npm` or `yarn`.
 
 ```
 npm install @blobber/react
@@ -18,38 +18,35 @@ yarn add @blobber/react
 
 ## Getting Started
 
-The `@blobber/react` package exports a React hook called `useUpload`. The hook returns a function called `handleUpload` which you should attach to an `<input>` element as the `onChange` callback.
+`@blobber/react` exports a React hook called `useUpload`. The hook returns a function called `handleUpload` which you should attach to an `<input>` element as the `onChange` callback.
 
 ```javascript
 import { useUpload } from '@blobber/react'
 
-function ImageUpload() {
-  const { handleUpload } = useUpload({
-      onSuccess: (file) => {
-        api.post('/user', { photoId: file.id })
-    }
+function ImageUploadButton() {
+  const { handleUpload, useFile } = useUpload()
+
+  useFile((file) => {
+    api.post('/user', { photoId: file.id })
   })
 
-  return (
-    <input type='file' onChange={handleUpload} />
-  )
+  return <input type="file" onChange={handleUpload} />
 }
 ```
 
-When the user successfully uploads a file, `onSuccess` fires with the resulting `file` object. This is where you should process and store any file metadata. In particular, you will want to store the `file.id` so you can fetch the image elsewhere in your application using `getUrl`.
+When the user successfully uploads a file, the `useFile` hook fires with the resulting `file` object. This is where you should store the `file.id` so you can fetch the image elsewhere in your application using `getUrl`.
 
 `getUrl` generates a URL for the file you are requesting. It accepts three arguments:
- - `fileId` - a UID used by Blobber to identify the file
- - `size` - an integer representing the width of the resulting file
- - `format` - an image file format (currently supports `jpg`, `png`, and `webp`)
+
+- `fileId` - a UID used by Blobber to identify the file
+- `size` - an integer representing the width of the resulting file
+- `format` - an image file format (currently supports `jpg`, `png`, and `webp`)
 
 ```javascript
 import { getUrl } from '@blobber/react'
 
 function ProfileImage({ photoId }) {
-  return (
-    <img src={getUrl(photoId, 480, 'webp')} />
-  )
+  return <img src={getUrl(photoId, 480, 'webp')} />
 }
 ```
 
@@ -89,9 +86,7 @@ function ImageUpload() {
 import { getUrl } from '@blobber/react'
 
 function ProfileImage({ photoId }) {
-  return (
-    <img src={getUrl(photoId, 480, 'webp')} />
-  )
+  return <img src={getUrl(photoId, 480, 'webp')} />
 }
 ```
 

@@ -58,16 +58,19 @@ export interface FileUploadResult {
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  getUrl: (fileId: string, extension: string, size: number) => string
   useFile: (onSuccess: FileUploadSuccess) => void
 }
 
-export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
-  if (!config?.clientId && !process.env.BLOBBER_CLIENT_ID) {
-    throw Error('clientId not found: missing environment variable')
+export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
+  let clientId: string
+  if (config.clientId) {
+    clientId = config.clientId
+  } else if (process.env.BLOBBER_CLIENT_ID) {
+    clientId = process.env.BLOBBER_CLIENT_ID
+  } else {
+    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
+      or pass clientId property to useUpload params `)
   }
-
-  const clientId = (config?.clientId || process.env.BLOBBER_CLIENT_ID)!
 
   const [state, setState] = useState<FileUploadState>({
     file: {
@@ -114,15 +117,6 @@ export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
     }
   }
 
-  const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
-    if (!fileId || fileId === '') {
-      return config?.placeholderUrl || ''
-    }
-
-    const root = 'https://d2v15tqee22i7x.cloudfront.net'
-    return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`
-  }
-
   const useFile = (onSuccess: FileUploadSuccess) => {
     useEffect(() => {
       if (!state.loading) {
@@ -140,7 +134,6 @@ export const useUpload = (config?: FileUploadConfig): FileUploadResult => {
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
-    getUrl: getUrl,
     useFile: useFile,
   }
 }
@@ -165,16 +158,19 @@ export interface MultipleFileUploadResult {
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  getUrl: (fileId: string, extension: string, size: number) => string
   useFiles: (onSuccess: MultipleFileUploadSuccess) => void
 }
 
-export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFileUploadResult => {
-  if (!config?.clientId && !process.env.BLOBBER_CLIENT_ID) {
-    throw Error('clientId not found: missing environment variable')
+export const useMultipleUpload = (config: MultipleFileUploadConfig = {}): MultipleFileUploadResult => {
+  let clientId: string
+  if (config.clientId) {
+    clientId = config.clientId
+  } else if (process.env.BLOBBER_CLIENT_ID) {
+    clientId = process.env.BLOBBER_CLIENT_ID
+  } else {
+    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
+      or pass clientId property to useMultipleUpload params `)
   }
-
-  const clientId = (config?.clientId || process.env.BLOBBER_CLIENT_ID)!
 
   const [state, setState] = useState<MultipleFileUploadState>({
     files: [],
@@ -214,15 +210,6 @@ export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFi
     }
   }
 
-  const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
-    if (!fileId || fileId === '') {
-      return config?.placeholderUrl || ''
-    }
-
-    const root = 'https://d2v15tqee22i7x.cloudfront.net'
-    return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`
-  }
-
   const useFiles = (onSuccess: MultipleFileUploadSuccess) => {
     useEffect(() => {
       if (!state.loading) {
@@ -240,7 +227,6 @@ export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFi
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
-    getUrl: getUrl,
     useFiles: useFiles,
   }
 }
@@ -249,11 +235,12 @@ export const useMultipleUpload = (config?: MultipleFileUploadConfig): MultipleFi
 // These rely on process.env.BLOBBER_CLIENT_ID
 
 export const handleUpload = async (event: any) => {
-  if (!process.env.BLOBBER_CLIENT_ID) {
-    throw Error('clientId not found: missing environment variable')
+  let clientId: string
+  if (process.env.BLOBBER_CLIENT_ID) {
+    clientId = process.env.BLOBBER_CLIENT_ID
+  } else {
+    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable`)
   }
-
-  const clientId = process.env.BLOBBER_CLIENT_ID
 
   const files = event.target.files
   if (!files) {
@@ -277,13 +264,37 @@ export const handleUpload = async (event: any) => {
   return { error: null, file: res }
 }
 
-export const getUrl = (fileId: string, extension: string = 'webp', size: number = 720) => {
-  if (!process.env.BLOBBER_CLIENT_ID) {
-    throw Error('clientId not found: missing environment variable')
+export interface GetUrlParams {
+  id: string
+  height?: number
+  width?: number
+  format?: string
+  clientId?: string
+}
+
+export const getUrl = ({ id, width, height, format, clientId: providedClientId }: GetUrlParams) => {
+  const root = 'https://cdn.blobber.dev'
+
+  let clientId: string
+  if (providedClientId) {
+    clientId = providedClientId
+  } else if (process.env.BLOBBER_CLIENT_ID) {
+    clientId = process.env.BLOBBER_CLIENT_ID
+  } else {
+    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
+      or pass clientId property to getUrl params `)
   }
 
-  const clientId = process.env.BLOBBER_CLIENT_ID
+  const params = []
+  if (width) params.push('w=' + width)
+  if (height) params.push('h=' + height)
 
-  const root = 'https://d2v15tqee22i7x.cloudfront.net'
-  return `${root}/${clientId}/${fileId}/${fileId}-${size}.${extension}`
+  let paramsString = ''
+  if (params.length) {
+    paramsString = '?' + params.join('&')
+  }
+
+  let extension = format ? `.${format}` : ''
+
+  return `${root}/${clientId}/${id}${extension}${paramsString}`
 }

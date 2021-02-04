@@ -21,16 +21,16 @@ yarn add @blobber/react
 `@blobber/react` exports a React hook called `useUpload`. The hook returns a function called `handleUpload` which you should attach to an `<input>` element as the `onChange` callback.
 
 ```javascript
-import { useUpload } from '@blobber/react'
+import { useUpload } from "@blobber/react";
 
 function ImageUploadButton() {
-  const { handleUpload, useFile } = useUpload()
+  const { handleUpload, useFile } = useUpload();
 
   useFile((file) => {
-    api.post('/user', { photoId: file.id })
-  })
+    api.post("/user", { photoId: file.id });
+  });
 
-  return <input type="file" onChange={handleUpload} />
+  return <input type="file" onChange={handleUpload} />;
 }
 ```
 
@@ -43,10 +43,10 @@ When the user successfully uploads a file, the `useFile` hook fires with the res
 - `format` - an image file format (currently supports `jpg`, `png`, and `webp`)
 
 ```javascript
-import { getUrl } from '@blobber/react'
+import { getUrl } from "@blobber/react";
 
 function ProfileImage({ photoId }) {
-  return <img src={getUrl(photoId, 480, 'webp')} />
+  return <img src={getUrl(photoId, 480, "webp")} />;
 }
 ```
 
@@ -83,10 +83,10 @@ function ImageUpload() {
 ```
 
 ```javascript
-import { getUrl } from '@blobber/react'
+import { getUrl } from "@blobber/react";
 
 function ProfileImage({ photoId }) {
-  return <img src={getUrl(photoId, 480, 'webp')} />
+  return <img src={getUrl(photoId, 480, "webp")} />;
 }
 ```
 

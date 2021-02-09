@@ -268,11 +268,12 @@ export interface GetUrlParams {
   id: string
   height?: number
   width?: number
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'oustide'
   format?: string
   clientId?: string
 }
 
-export const getUrl = ({ id, width, height, format, clientId: providedClientId }: GetUrlParams) => {
+export const getUrl = ({ id, width, height, fit, format, clientId: providedClientId }: GetUrlParams) => {
   const root = 'https://cdn.blobber.dev'
 
   let clientId: string
@@ -286,8 +287,9 @@ export const getUrl = ({ id, width, height, format, clientId: providedClientId }
   }
 
   const params = []
-  if (width) params.push('w=' + width)
-  if (height) params.push('h=' + height)
+  if (width) params.push('width=' + width)
+  if (height) params.push('height=' + height)
+  if (fit) params.push('fit=' + fit)
 
   let paramsString = ''
   if (params.length) {

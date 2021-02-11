@@ -286,17 +286,17 @@ export const getUrl = ({ id, width, height, fit, format, clientId: providedClien
       or pass clientId property to getUrl params `)
   }
 
-  const params = []
-  if (width) params.push('width=' + width)
-  if (height) params.push('height=' + height)
-  if (fit) params.push('fit=' + fit)
+  const paramList = []
+  if (fit) paramList.push('fit-' + fit)
+  if (height) paramList.push('height-' + height)
+  if (width) paramList.push('width-' + width)
 
   let paramsString = ''
-  if (params.length) {
-    paramsString = '?' + params.join('&')
+  if (paramList.length) {
+    paramsString = `${paramList.join(',')}/`
   }
 
   let extension = format ? `.${format}` : ''
 
-  return `${root}/${clientId}/${id}${extension}${paramsString}`
+  return `${root}/${clientId}/${paramsString}${id}${extension}`
 }

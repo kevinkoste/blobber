@@ -42,11 +42,12 @@ const uploadFile = (data: FormData, clientId: string): Promise<FileData[]> => {
 
 export interface FileUploadConfig {
   clientId?: string
-  placeholderUrl?: string
 }
 
 export interface FileUploadState {
   file: FileData | null
+  preview: string | null
+  selectedFile: File | null
   error: string | null
   loading: boolean
 }
@@ -55,6 +56,7 @@ export type FileUploadSuccess = (file: FileData | null, error: string | null) =>
 
 export interface FileUploadResult {
   file: FileData | null
+  preview: string | null
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -72,15 +74,11 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
       or pass clientId property to useUpload params `)
   }
 
+  // state that is exposed from hook
   const [state, setState] = useState<FileUploadState>({
-    file: {
-      id: '',
-      fileId: '',
-      extension: '',
-      mimetype: '',
-      name: '',
-      size: 0,
-    },
+    file: null,
+    preview: null,
+    selectedFile: null,
     error: null,
     loading: false,
   })
@@ -89,10 +87,13 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
     setState({ ...state, loading: true })
 
     const files = event.target.files
-    if (!files) {
+    if (!files || files.length < 1) {
       setState({ ...state, loading: false, error: 'No files were uploaded' })
       return
     }
+
+    // set selected file to populate preview
+    setState({ ...state, selectedFile: files[0] })
 
     // create form and append all files
     const form = new FormData()
@@ -120,7 +121,7 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
   const useFile = (onSuccess: FileUploadSuccess) => {
     useEffect(() => {
       if (!state.loading) {
-        if (state.file && state.file.id !== '') {
+        if (state.file) {
           onSuccess(state.file, null)
         } else if (state.error) {
           onSuccess(null, state.error)
@@ -129,8 +130,23 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
     }, [state])
   }
 
+  // handle generating preview URL from selected file
+  useEffect(() => {
+    if (!state.selectedFile) {
+      setState({ ...state, preview: null })
+      return
+    }
+
+    const preview = URL.createObjectURL(state.selectedFile)
+    setState({ ...state, preview: preview })
+
+    // free memory when this component unmounts
+    return () => URL.revokeObjectURL(preview)
+  }, [state.selectedFile])
+
   return {
     file: state.file,
+    preview: state.preview,
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,
@@ -138,98 +154,98 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
   }
 }
 
-// MULTIPLE FILE UPLOAD HOOK //
+// // MULTIPLE FILE UPLOAD HOOK //
 
-export interface MultipleFileUploadConfig {
-  clientId?: string
-  placeholderUrl?: string
-}
+// export interface MultipleFileUploadConfig {
+//   clientId?: string
+//   placeholderUrl?: string
+// }
 
-export interface MultipleFileUploadState {
-  files: FileData[]
-  error: string | null
-  loading: boolean
-}
+// export interface MultipleFileUploadState {
+//   files: FileData[]
+//   error: string | null
+//   loading: boolean
+// }
 
-export type MultipleFileUploadSuccess = (files: FileData[] | null, error: string | null) => void
+// export type MultipleFileUploadSuccess = (files: FileData[] | null, error: string | null) => void
 
-export interface MultipleFileUploadResult {
-  files: FileData[]
-  error: string | null
-  loading: boolean
-  handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  useFiles: (onSuccess: MultipleFileUploadSuccess) => void
-}
+// export interface MultipleFileUploadResult {
+//   files: FileData[]
+//   error: string | null
+//   loading: boolean
+//   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+//   useFiles: (onSuccess: MultipleFileUploadSuccess) => void
+// }
 
-export const useMultipleUpload = (config: MultipleFileUploadConfig = {}): MultipleFileUploadResult => {
-  let clientId: string
-  if (config.clientId) {
-    clientId = config.clientId
-  } else if (process.env.BLOBBER_CLIENT_ID) {
-    clientId = process.env.BLOBBER_CLIENT_ID
-  } else {
-    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
-      or pass clientId property to useMultipleUpload params `)
-  }
+// export const useMultipleUpload = (config: MultipleFileUploadConfig = {}): MultipleFileUploadResult => {
+//   let clientId: string
+//   if (config.clientId) {
+//     clientId = config.clientId
+//   } else if (process.env.BLOBBER_CLIENT_ID) {
+//     clientId = process.env.BLOBBER_CLIENT_ID
+//   } else {
+//     throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
+//       or pass clientId property to useMultipleUpload params `)
+//   }
 
-  const [state, setState] = useState<MultipleFileUploadState>({
-    files: [],
-    error: null,
-    loading: false,
-  })
+//   const [state, setState] = useState<MultipleFileUploadState>({
+//     files: [],
+//     error: null,
+//     loading: false,
+//   })
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState({ ...state, loading: true })
+//   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+//     setState({ ...state, loading: true })
 
-    const files = event.target.files
-    if (!files) {
-      setState({ ...state, loading: false, error: 'No files were uploaded' })
-      return
-    }
+//     const files = event.target.files
+//     if (!files) {
+//       setState({ ...state, loading: false, error: 'No files were uploaded' })
+//       return
+//     }
 
-    // create form and append all files
-    const form = new FormData()
-    for (let i = 0; i < files.length; i++) {
-      form.append('file', files[i])
-    }
+//     // create form and append all files
+//     const form = new FormData()
+//     for (let i = 0; i < files.length; i++) {
+//       form.append('file', files[i])
+//     }
 
-    try {
-      // call helper function to send XMLHttpRequest
-      const res = await uploadFile(form, clientId)
-      setState({
-        ...state,
-        files: res,
-        loading: false,
-      })
-    } catch (err) {
-      setState({
-        ...state,
-        error: err,
-        loading: false,
-      })
-    }
-  }
+//     try {
+//       // call helper function to send XMLHttpRequest
+//       const res = await uploadFile(form, clientId)
+//       setState({
+//         ...state,
+//         files: res,
+//         loading: false,
+//       })
+//     } catch (err) {
+//       setState({
+//         ...state,
+//         error: err,
+//         loading: false,
+//       })
+//     }
+//   }
 
-  const useFiles = (onSuccess: MultipleFileUploadSuccess) => {
-    useEffect(() => {
-      if (!state.loading) {
-        if (state.files.length > 0) {
-          onSuccess(state.files, null)
-        } else if (state.error) {
-          onSuccess([], state.error)
-        }
-      }
-    }, [state])
-  }
+//   const useFiles = (onSuccess: MultipleFileUploadSuccess) => {
+//     useEffect(() => {
+//       if (!state.loading) {
+//         if (state.files.length > 0) {
+//           onSuccess(state.files, null)
+//         } else if (state.error) {
+//           onSuccess([], state.error)
+//         }
+//       }
+//     }, [state])
+//   }
 
-  return {
-    files: state.files,
-    error: state.error,
-    loading: state.loading,
-    handleUpload: handleUpload,
-    useFiles: useFiles,
-  }
-}
+//   return {
+//     files: state.files,
+//     error: state.error,
+//     loading: state.loading,
+//     handleUpload: handleUpload,
+//     useFiles: useFiles,
+//   }
+// }
 
 // NON HOOKS EXPORTS //
 // These rely on process.env.BLOBBER_CLIENT_ID
@@ -253,15 +269,15 @@ export const handleUpload = async (event: any) => {
     form.append('file', files[i])
   }
 
-  let res: FileData[] | null = null
+  let fileData: FileData[] | null = null
   try {
     // call helper function to send XMLHttpRequest
-    res = await uploadFile(form, clientId)
+    fileData = await uploadFile(form, clientId)
   } catch (err) {
     return { error: err, file: null }
   }
 
-  return { error: null, file: res }
+  return { error: null, file: fileData[0] }
 }
 
 export interface GetUrlParams {
@@ -269,21 +285,21 @@ export interface GetUrlParams {
   height?: number
   width?: number
   fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'oustide'
-  format?: string
+  format?: 'jpg' | 'jpeg' | 'png' | 'webp' | 'avif'
   clientId?: string
 }
 
-export const getUrl = ({ id, width, height, fit, format, clientId: providedClientId }: GetUrlParams) => {
+export const getUrl = ({ id, width, height, fit, format, clientId }: GetUrlParams) => {
   const root = 'https://cdn.blobber.dev'
 
-  let clientId: string
-  if (providedClientId) {
-    clientId = providedClientId
+  let resolvedClientId: string
+  if (clientId) {
+    resolvedClientId = clientId
   } else if (process.env.BLOBBER_CLIENT_ID) {
-    clientId = process.env.BLOBBER_CLIENT_ID
+    resolvedClientId = process.env.BLOBBER_CLIENT_ID
   } else {
     throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
-      or pass clientId property to getUrl params `)
+      or pass clientId property to getUrl params`)
   }
 
   const paramList = []
@@ -298,5 +314,5 @@ export const getUrl = ({ id, width, height, fit, format, clientId: providedClien
 
   let extension = format ? `.${format}` : ''
 
-  return `${root}/${clientId}/${paramsString}${id}${extension}`
+  return `${root}/${resolvedClientId}/${paramsString}${id}${extension}`
 }

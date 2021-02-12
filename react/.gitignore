@@ -1,6 +1,7 @@
 # manual
 archive
 config
+.DS_Store
 
 # Logs
 logs

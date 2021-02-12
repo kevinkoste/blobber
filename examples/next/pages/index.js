@@ -1,12 +1,35 @@
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
 
+import { useState, useEffect } from "react";
 import { useUpload } from "@blobber/react";
 
+process.env.BLOBBER_CLIENT_ID = "J1UPK5Z6JV6A2180";
+
 export default function Home() {
-  const { handleUpload, useFile } = useUpload({
-    clientId: "SANDBOX",
-  });
+  const { handleUpload, file, preview: previewUrl } = useUpload();
+
+  const [imageUrl, setImageUrl] = useState("/vercel.svg");
+
+  useEffect(() => {
+    // as soon as the user selects an image,
+    // change the image url to the preview
+    if (previewUrl) {
+      console.log(previewUrl);
+
+      setImageUrl(previewUrl);
+    }
+  }, [previewUrl]);
+
+  useEffect(() => {
+    // once the file is uploaded, save file.id to your api
+    // you'll use this to serve the image in the next step
+    if (file) {
+      // api.post("/user", { photoId: file.id });
+      // you may also want to hint that the upload succeeded
+      alert("file uploaded!");
+    }
+  }, [file]);
 
   return (
     <div className={styles.container}>
@@ -20,7 +43,9 @@ export default function Home() {
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
 
-        <input onChange={handleUpload}>Upload File!</input>
+        <input type="file" onChange={handleUpload} />
+
+        <img src={imageUrl} width={200} />
       </main>
 
       <footer className={styles.footer}>

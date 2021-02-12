@@ -19,7 +19,7 @@
   "files": [
     "dist/**/*"
   ],
-  "peerDependencies": {
+  "dependencies": {
     "react": ">=16"
   },
   "devDependencies": {

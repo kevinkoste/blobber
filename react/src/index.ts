@@ -46,7 +46,7 @@ export interface FileUploadConfig {
 
 export interface FileUploadState {
   file: FileData | null
-  preview: string | null
+  previewUrl: string | null
   selectedFile: File | null
   error: string | null
   loading: boolean
@@ -56,7 +56,7 @@ export type FileUploadSuccess = (file: FileData | null, error: string | null) =>
 
 export interface FileUploadResult {
   file: FileData | null
-  preview: string | null
+  previewUrl: string | null
   error: string | null
   loading: boolean
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -77,7 +77,7 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
   // state that is exposed from hook
   const [state, setState] = useState<FileUploadState>({
     file: null,
-    preview: null,
+    previewUrl: null,
     selectedFile: null,
     error: null,
     loading: false,
@@ -92,7 +92,7 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
       return
     }
 
-    // set selected file to populate preview
+    // set selected file to populate previewUrl
     setState({ ...state, selectedFile: files[0] })
 
     // create form and append all files
@@ -130,23 +130,23 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
     }, [state])
   }
 
-  // handle generating preview URL from selected file
+  // handle generating previewUrl URL from selected file
   useEffect(() => {
     if (!state.selectedFile) {
-      setState({ ...state, preview: null })
+      setState({ ...state, previewUrl: null })
       return
     }
 
-    const preview = URL.createObjectURL(state.selectedFile)
-    setState({ ...state, preview: preview })
+    const previewUrl = URL.createObjectURL(state.selectedFile)
+    setState({ ...state, previewUrl: previewUrl })
 
     // free memory when this component unmounts
-    return () => URL.revokeObjectURL(preview)
+    return () => URL.revokeObjectURL(previewUrl)
   }, [state.selectedFile])
 
   return {
     file: state.file,
-    preview: state.preview,
+    previewUrl: state.previewUrl,
     error: state.error,
     loading: state.loading,
     handleUpload: handleUpload,

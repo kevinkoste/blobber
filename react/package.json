@@ -1,6 +1,6 @@
 {
   "name": "@blobber/react",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "blobber react client sdk",
   "author": "Kevin Koste",
   "license": "MIT",
@@ -19,8 +19,9 @@
   "files": [
     "dist/**/*"
   ],
-  "dependencies": {
-    "react": ">=16"
+  "peerDependencies": {
+    "react": "^16.11.0 || ^17",
+    "react-dom": "^16.11.0 || ^17"
   },
   "devDependencies": {
     "@types/node": "^14.6.2",

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 
+// metadata returned to the client from upload.blobber.dev after a file is uploaded
 export interface FileData {
   id: string
-  fileId: string
+  name: string
   extension: string
   mimetype: string
-  name: string
   size: number
 }
 
@@ -40,11 +40,12 @@ const uploadFile = (data: FormData, clientId: string): Promise<FileData[]> => {
 
 // SINGLE FILE UPLOAD HOOK //
 
-export interface FileUploadConfig {
+export interface UploadConfig {
   clientId?: string
+  placeholderUrl?: string
 }
 
-export interface FileUploadState {
+export interface UploadState {
   file: FileData | null
   previewUrl: string | null
   selectedFile: File | null
@@ -52,18 +53,15 @@ export interface FileUploadState {
   loading: boolean
 }
 
-export type FileUploadSuccess = (file: FileData | null, error: string | null) => void
-
-export interface FileUploadResult {
-  file: FileData | null
-  previewUrl: string | null
-  error: string | null
-  loading: boolean
+export interface UploadResult {
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  useFile: (onSuccess: FileUploadSuccess) => void
+  previewUrl: string | null
+  file: FileData | null
+  loading: boolean
+  error: string | null
 }
 
-export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
+export function useUpload(config: UploadConfig = {}): UploadResult {
   let clientId: string
   if (config.clientId) {
     clientId = config.clientId
@@ -75,9 +73,9 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
   }
 
   // state that is exposed from hook
-  const [state, setState] = useState<FileUploadState>({
+  const [state, setState] = useState<UploadState>({
     file: null,
-    previewUrl: null,
+    previewUrl: config.placeholderUrl ? config.placeholderUrl : null,
     selectedFile: null,
     error: null,
     loading: false,
@@ -118,18 +116,6 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
     }
   }
 
-  const useFile = (onSuccess: FileUploadSuccess) => {
-    useEffect(() => {
-      if (!state.loading) {
-        if (state.file) {
-          onSuccess(state.file, null)
-        } else if (state.error) {
-          onSuccess(null, state.error)
-        }
-      }
-    }, [state])
-  }
-
   // handle generating previewUrl URL from selected file
   useEffect(() => {
     if (!state.selectedFile) {
@@ -145,13 +131,55 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
   }, [state.selectedFile])
 
   return {
-    file: state.file,
-    previewUrl: state.previewUrl,
-    error: state.error,
-    loading: state.loading,
     handleUpload: handleUpload,
-    useFile: useFile,
+    previewUrl: state.previewUrl,
+    file: state.file,
+    loading: state.loading,
+    error: state.error,
   }
+}
+
+// getUrl generates a url at cdn.blobber.dev
+
+export interface GetUrlConfig {
+  id: string
+  height?: number
+  width?: number
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'oustide'
+  format?: 'jpg' | 'jpeg' | 'png' | 'webp' | 'avif'
+  clientId?: string
+}
+
+export function getUrl({ id, width, height, fit, format, clientId }: GetUrlConfig) {
+  const root = 'https://cdn.blobber.dev'
+
+  if (!id) {
+    throw Error(`File ID not found. Provide a Blobber File ID as 'id' in in GetUrlConfig`)
+  }
+
+  let resolvedClientId: string
+  if (clientId) {
+    resolvedClientId = clientId
+  } else if (process.env.BLOBBER_CLIENT_ID) {
+    resolvedClientId = process.env.BLOBBER_CLIENT_ID
+  } else {
+    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
+      or pass clientId property to getUrl params`)
+  }
+
+  const paramList = []
+  if (fit) paramList.push('fit-' + fit)
+  if (height) paramList.push('height-' + height)
+  if (width) paramList.push('width-' + width)
+
+  let paramsString = ''
+  if (paramList.length) {
+    paramsString = `${paramList.join(',')}/`
+  }
+
+  let extension = format ? `.${format}` : ''
+
+  return `${root}/${resolvedClientId}/${paramsString}${id}${extension}`
 }
 
 // // MULTIPLE FILE UPLOAD HOOK //
@@ -247,72 +275,35 @@ export const useUpload = (config: FileUploadConfig = {}): FileUploadResult => {
 //   }
 // }
 
-// NON HOOKS EXPORTS //
-// These rely on process.env.BLOBBER_CLIENT_ID
+// // NON HOOKS EXPORTS //
+// // These rely on process.env.BLOBBER_CLIENT_ID
 
-export const handleUpload = async (event: any) => {
-  let clientId: string
-  if (process.env.BLOBBER_CLIENT_ID) {
-    clientId = process.env.BLOBBER_CLIENT_ID
-  } else {
-    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable`)
-  }
+// export const handleUpload = async (event: any) => {
+//   let clientId: string
+//   if (process.env.BLOBBER_CLIENT_ID) {
+//     clientId = process.env.BLOBBER_CLIENT_ID
+//   } else {
+//     throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable`)
+//   }
 
-  const files = event.target.files
-  if (!files) {
-    return { error: 'No file uploaded', file: null }
-  }
+//   const files = event.target.files
+//   if (!files) {
+//     return { error: 'No file uploaded', file: null }
+//   }
 
-  // create form and append all files
-  const form = new FormData()
-  for (let i = 0; i < files.length; i++) {
-    form.append('file', files[i])
-  }
+//   // create form and append all files
+//   const form = new FormData()
+//   for (let i = 0; i < files.length; i++) {
+//     form.append('file', files[i])
+//   }
 
-  let fileData: FileData[] | null = null
-  try {
-    // call helper function to send XMLHttpRequest
-    fileData = await uploadFile(form, clientId)
-  } catch (err) {
-    return { error: err, file: null }
-  }
+//   let fileData: FileData[] | null = null
+//   try {
+//     // call helper function to send XMLHttpRequest
+//     fileData = await uploadFile(form, clientId)
+//   } catch (err) {
+//     return { error: err, file: null }
+//   }
 
-  return { error: null, file: fileData[0] }
-}
-
-export interface GetUrlParams {
-  id: string
-  height?: number
-  width?: number
-  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'oustide'
-  format?: 'jpg' | 'jpeg' | 'png' | 'webp' | 'avif'
-  clientId?: string
-}
-
-export const getUrl = ({ id, width, height, fit, format, clientId }: GetUrlParams) => {
-  const root = 'https://cdn.blobber.dev'
-
-  let resolvedClientId: string
-  if (clientId) {
-    resolvedClientId = clientId
-  } else if (process.env.BLOBBER_CLIENT_ID) {
-    resolvedClientId = process.env.BLOBBER_CLIENT_ID
-  } else {
-    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
-      or pass clientId property to getUrl params`)
-  }
-
-  const paramList = []
-  if (fit) paramList.push('fit-' + fit)
-  if (height) paramList.push('height-' + height)
-  if (width) paramList.push('width-' + width)
-
-  let paramsString = ''
-  if (paramList.length) {
-    paramsString = `${paramList.join(',')}/`
-  }
-
-  let extension = format ? `.${format}` : ''
-
-  return `${root}/${resolvedClientId}/${paramsString}${id}${extension}`
-}
+//   return { error: null, file: fileData[0] }
+// }

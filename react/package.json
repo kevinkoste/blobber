@@ -1,6 +1,6 @@
 {
   "name": "@blobber/react",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "blobber react client sdk",
   "author": "Kevin Koste",
   "license": "MIT",

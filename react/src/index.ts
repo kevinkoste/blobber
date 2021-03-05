@@ -45,14 +45,6 @@ export interface UploadConfig {
   placeholderUrl?: string
 }
 
-export interface UploadState {
-  file: FileData | null
-  previewUrl: string | null
-  selectedFile: File | null
-  error: string | null
-  loading: boolean
-}
-
 export interface UploadResult {
   handleUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   previewUrl: string | null
@@ -72,26 +64,31 @@ export function useUpload(config: UploadConfig = {}): UploadResult {
       or pass clientId property to useUpload params `)
   }
 
-  // state that is exposed from hook
-  const [state, setState] = useState<UploadState>({
-    file: null,
-    previewUrl: config.placeholderUrl ? config.placeholderUrl : null,
-    selectedFile: null,
-    error: null,
-    loading: false,
-  })
+  let placeholderUrl: string
+  if (config.placeholderUrl) {
+    placeholderUrl = config.placeholderUrl
+  } else {
+    placeholderUrl = ''
+  }
+
+  const [file, setFile] = useState<FileData | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(placeholderUrl)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState({ ...state, loading: true })
+    setLoading(true)
 
     const files = event.target.files
     if (!files || files.length < 1) {
-      setState({ ...state, loading: false, error: 'No files were uploaded' })
+      setError('No files were uploaded')
+      setLoading(false)
       return
     }
 
     // set selected file to populate previewUrl
-    setState({ ...state, selectedFile: files[0] })
+    setSelectedFile(files[0])
 
     // create form and append all files
     const form = new FormData()
@@ -102,40 +99,33 @@ export function useUpload(config: UploadConfig = {}): UploadResult {
     try {
       // call helper function to send XMLHttpRequest
       const res = await uploadFile(form, clientId)
-      setState({
-        ...state,
-        file: res[0],
-        loading: false,
-      })
+      setFile(res[0])
+      setLoading(false)
     } catch (err) {
-      setState({
-        ...state,
-        error: err,
-        loading: false,
-      })
+      setError(err)
+      setLoading(false)
     }
   }
 
   // handle generating previewUrl URL from selected file
   useEffect(() => {
-    if (!state.selectedFile) {
-      setState({ ...state, previewUrl: null })
+    if (!selectedFile) {
       return
     }
 
-    const previewUrl = URL.createObjectURL(state.selectedFile)
-    setState({ ...state, previewUrl: previewUrl })
+    const previewUrl = URL.createObjectURL(selectedFile)
+    setPreviewUrl(previewUrl)
 
     // free memory when this component unmounts
     return () => URL.revokeObjectURL(previewUrl)
-  }, [state.selectedFile])
+  }, [selectedFile])
 
   return {
     handleUpload: handleUpload,
-    previewUrl: state.previewUrl,
-    file: state.file,
-    loading: state.loading,
-    error: state.error,
+    previewUrl: previewUrl,
+    file: file,
+    loading: loading,
+    error: error,
   }
 }
 

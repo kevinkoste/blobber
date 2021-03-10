@@ -133,11 +133,11 @@ export function useUpload(config: UploadConfig = {}): UploadResult {
 
 export interface GetUrlConfig {
   id: string
+  clientId?: string
   height?: number
   width?: number
   fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'oustide'
   format?: 'jpg' | 'jpeg' | 'png' | 'webp' | 'avif'
-  clientId?: string
 }
 
 export function getUrl({ id, width, height, fit, format, clientId }: GetUrlConfig) {

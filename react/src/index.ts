@@ -51,7 +51,10 @@ export interface UploadResult {
   file: FileData | null
   loading: boolean
   error: string | null
+  useFile: (onSuccess: UploadSuccess) => void
 }
+
+export type UploadSuccess = (file: FileData | null, error: string | null) => void
 
 export function useUpload(config: UploadConfig = {}): UploadResult {
   let clientId: string
@@ -120,12 +123,23 @@ export function useUpload(config: UploadConfig = {}): UploadResult {
     return () => URL.revokeObjectURL(previewUrl)
   }, [selectedFile])
 
+  const useFile = (onSuccess: UploadSuccess) => {
+    useEffect(() => {
+      if (file) {
+        onSuccess(file, null)
+      } else if (error) {
+        onSuccess(null, error)
+      }
+    }, [file])
+  }
+
   return {
     handleUpload: handleUpload,
     previewUrl: previewUrl,
     file: file,
     loading: loading,
     error: error,
+    useFile: useFile,
   }
 }
 

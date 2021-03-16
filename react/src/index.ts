@@ -56,26 +56,18 @@ export interface UploadResult {
 
 export type UploadSuccess = (file: FileData | null, error: string | null) => void
 
-export function useUpload(config: UploadConfig = {}): UploadResult {
-  let clientId: string
-  if (config.clientId) {
-    clientId = config.clientId
-  } else if (process.env.BLOBBER_CLIENT_ID) {
-    clientId = process.env.BLOBBER_CLIENT_ID
+export function useUpload({ clientId, placeholderUrl }: UploadConfig = {}): UploadResult {
+  let resolvedPlaceholderUrl: string
+  if (placeholderUrl) {
+    resolvedPlaceholderUrl = placeholderUrl
   } else {
-    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
-      or pass clientId property to useUpload params `)
+    resolvedPlaceholderUrl = ''
   }
 
-  let placeholderUrl: string
-  if (config.placeholderUrl) {
-    placeholderUrl = config.placeholderUrl
-  } else {
-    placeholderUrl = ''
-  }
+  const resolvedClientId = ResolveClientId(clientId, 'useUpload')
 
   const [file, setFile] = useState<FileData | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(placeholderUrl)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(resolvedPlaceholderUrl)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -101,7 +93,7 @@ export function useUpload(config: UploadConfig = {}): UploadResult {
 
     try {
       // call helper function to send XMLHttpRequest
-      const res = await uploadFile(form, clientId)
+      const res = await uploadFile(form, resolvedClientId)
       setFile(res[0])
       setLoading(false)
     } catch (err) {
@@ -158,18 +150,10 @@ export function getUrl({ id, width, height, fit, format, clientId }: GetUrlConfi
   const root = 'https://cdn.blobber.dev'
 
   if (!id) {
-    throw Error(`File ID not found. Provide a Blobber File ID as 'id' in in GetUrlConfig`)
+    throw Error(`getUrl: File ID not found. Pass Blobber File ID as 'id' property to getUrl config`)
   }
 
-  let resolvedClientId: string
-  if (clientId) {
-    resolvedClientId = clientId
-  } else if (process.env.BLOBBER_CLIENT_ID) {
-    resolvedClientId = process.env.BLOBBER_CLIENT_ID
-  } else {
-    throw Error(`Blobber Client ID not found. Provide BLOBBER_CLIENT_ID environment variable,
-      or pass clientId property to getUrl params`)
-  }
+  const resolvedClientId = ResolveClientId(clientId, 'getUrl')
 
   const paramList = []
   if (fit) paramList.push('fit-' + fit)
@@ -184,6 +168,26 @@ export function getUrl({ id, width, height, fit, format, clientId }: GetUrlConfi
   let extension = format ? `.${format}` : ''
 
   return `${root}/${resolvedClientId}/${paramsString}${id}${extension}`
+}
+
+function ResolveClientId(clientId: string | undefined, functionName: string) {
+  let resolvedClientId: string
+
+  if (clientId) {
+    resolvedClientId = clientId
+  } else if (process.env.BLOBBER_CLIENT_ID) {
+    resolvedClientId = process.env.BLOBBER_CLIENT_ID
+  } else if (process.env.REACT_APP_BLOBBER_CLIENT_ID) {
+    resolvedClientId = process.env.REACT_APP_BLOBBER_CLIENT_ID
+  } else if (process.env.NEXT_PUBLIC_BLOBBER_CLIENT_ID) {
+    resolvedClientId = process.env.NEXT_PUBLIC_BLOBBER_CLIENT_ID
+  } else {
+    throw Error(
+      `${functionName}: Blobber Client ID not found. Pass clientId property to ${functionName} config, or provide BLOBBER_CLIENT_ID environment variable.`
+    )
+  }
+
+  return resolvedClientId
 }
 
 // // MULTIPLE FILE UPLOAD HOOK //
